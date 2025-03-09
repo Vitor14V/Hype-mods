@@ -103,10 +103,66 @@ export class MemStorage implements IStorage {
       ...insertUser, 
       id, 
       isAdmin: false,
-      isBanned: false 
+      isBanned: false,
+      profilePicture: insertUser.profilePicture || null,
+      bio: insertUser.bio || null,
+      isProfileApproved: false,
+      isReported: false,
+      reportReason: null
     };
     this.users.set(id, user);
     return user;
+  }
+  
+  async updateUserProfile(userId: number, profile: UpdateUserProfile): Promise<User> {
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error("Usuário não encontrado");
+    }
+    
+    const updatedUser: User = {
+      ...user,
+      profilePicture: profile.profilePicture || user.profilePicture,
+      bio: profile.bio || user.bio,
+      isProfileApproved: false // Requer aprovação ao atualizar
+    };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async reportUser(userId: number, reason: string): Promise<User> {
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error("Usuário não encontrado");
+    }
+    
+    const updatedUser: User = {
+      ...user,
+      isReported: true,
+      reportReason: reason
+    };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async getReportedUsers(): Promise<User[]> {
+    return Array.from(this.users.values()).filter(
+      (user) => user.isReported
+    );
+  }
+  
+  async approveUserProfile(userId: number): Promise<User> {
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error("Usuário não encontrado");
+    }
+    
+    const updatedUser: User = {
+      ...user,
+      isProfileApproved: true
+    };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
   }
 
   async banUser(userId: number): Promise<User> {
@@ -207,7 +263,8 @@ export class MemStorage implements IStorage {
       isReported: false,
       reportReason: null,
       isResolved: false,
-      userId: comment.userId || null
+      userId: comment.userId || null,
+      replyToId: comment.replyToId || null
     };
     this.comments.set(id, newComment);
     return newComment;
@@ -247,6 +304,50 @@ export class MemStorage implements IStorage {
     };
     this.comments.set(commentId, updatedComment);
     return updatedComment;
+  }
+  
+  async getRepliesByCommentId(commentId: number): Promise<Comment[]> {
+    return Array.from(this.comments.values()).filter(
+      (comment) => comment.replyToId === commentId
+    );
+  }
+  
+  async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
+    const id = this.currentId++;
+    const newTicket: SupportTicket = {
+      ...ticket,
+      id,
+      createdAt: new Date(),
+      status: "pendente",
+      responseMessage: null,
+      resolvedAt: null
+    };
+    this.supportTickets.set(id, newTicket);
+    return newTicket;
+  }
+  
+  async getSupportTickets(): Promise<SupportTicket[]> {
+    return Array.from(this.supportTickets.values());
+  }
+  
+  async getSupportTicketById(id: number): Promise<SupportTicket | undefined> {
+    return this.supportTickets.get(id);
+  }
+  
+  async updateSupportTicket(id: number, data: UpdateSupportTicket): Promise<SupportTicket> {
+    const ticket = this.supportTickets.get(id);
+    if (!ticket) {
+      throw new Error("Ticket de suporte não encontrado");
+    }
+    
+    const updatedTicket: SupportTicket = {
+      ...ticket,
+      status: data.status || ticket.status,
+      responseMessage: data.responseMessage || ticket.responseMessage,
+      resolvedAt: data.status === "resolvido" ? new Date() : ticket.resolvedAt
+    };
+    this.supportTickets.set(id, updatedTicket);
+    return updatedTicket;
   }
 
   async getAnnouncements(): Promise<Announcement[]> {

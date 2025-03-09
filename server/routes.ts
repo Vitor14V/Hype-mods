@@ -6,7 +6,17 @@ import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
 import { storage } from "./storage";
-import { insertModSchema, insertAnnouncementSchema, insertCommentSchema, insertCommentReportSchema } from "@shared/schema";
+import { 
+  insertModSchema, 
+  insertAnnouncementSchema, 
+  insertCommentSchema, 
+  insertCommentReportSchema,
+  insertSupportTicketSchema,
+  updateSupportTicketSchema,
+  userReportSchema,
+  updateUserProfileSchema,
+  modProfileSchema
+} from "@shared/schema";
 
 // Configure multer for file uploads
 const upload = multer({
