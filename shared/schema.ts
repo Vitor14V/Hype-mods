@@ -16,6 +16,16 @@ export const mods = pgTable("mods", {
   imageUrl: text("image_url").notNull(),
   downloadUrl: text("download_url").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  rating: integer("rating").default(0).notNull(),
+  numRatings: integer("num_ratings").default(0).notNull(),
+});
+
+export const comments = pgTable("comments", {
+  id: serial("id").primaryKey(),
+  modId: integer("mod_id").references(() => mods.id).notNull(),
+  name: text("name").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const announcements = pgTable("announcements", {
@@ -43,6 +53,12 @@ export const insertModSchema = createInsertSchema(mods).pick({
   downloadUrl: true,
 });
 
+export const insertCommentSchema = createInsertSchema(comments).pick({
+  modId: true,
+  name: true,
+  content: true,
+});
+
 export const insertAnnouncementSchema = createInsertSchema(announcements).pick({
   message: true,
 });
@@ -51,12 +67,13 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({
   message: true,
 });
 
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Mod = typeof mods.$inferSelect;
+export type Comment = typeof comments.$inferSelect;
 export type Announcement = typeof announcements.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
-
-// Add InsertMod and InsertAnnouncement type exports
 export type InsertMod = z.infer<typeof insertModSchema>;
+export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;

@@ -1,8 +1,34 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import multer from "multer";
+import path from "path";
+import fs from "fs/promises";
 import { storage } from "./storage";
-import { insertModSchema, insertAnnouncementSchema } from "@shared/schema";
+import { insertModSchema, insertAnnouncementSchema, insertCommentSchema } from "@shared/schema";
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: "uploads/",
+    filename: (_req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+  }),
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type'));
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  }
+});
 
 // Criar alguns mods de exemplo
 const sampleMods = [
@@ -35,6 +61,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await storage.createMod(mod);
   }
 
+  // Ensure uploads directory exists
+  try {
+    await fs.mkdir('uploads', { recursive: true });
+    console.log('Uploads directory created/verified successfully');
+  } catch (error) {
+    console.error('Error creating uploads directory:', error);
+  }
+
+  // Add file upload endpoint
+  app.post("/api/upload", upload.single('file'), (req, res) => {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    // Return the URL that can be used to access the file
+    const url = `/uploads/${file.filename}`;
+    res.json({ url });
+  });
+
+  // Serve uploaded files
+  app.use('/uploads', express.static('uploads'));
+
+  // API Routes
   app.get("/api/mods", async (_req, res) => {
     const mods = await storage.getMods();
     res.json(mods);
@@ -48,6 +97,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const mod = await storage.createMod(parsed.data);
     res.status(201).json(mod);
+  });
+
+  app.get("/api/mods/:modId/comments", async (req, res) => {
+    const comments = await storage.getCommentsByModId(parseInt(req.params.modId));
+    res.json(comments);
+  });
+
+  app.post("/api/mods/:modId/comments", async (req, res) => {
+    const parsed = insertCommentSchema.safeParse({
+      ...req.body,
+      modId: parseInt(req.params.modId),
+    });
+    if (!parsed.success) {
+      return res.status(400).json(parsed.error);
+    }
+
+    const comment = await storage.createComment(parsed.data);
+    res.status(201).json(comment);
+  });
+
+  app.post("/api/mods/:modId/rate", async (req, res) => {
+    const modId = parseInt(req.params.modId);
+    const rating = parseInt(req.body.rating);
+
+    if (isNaN(rating) || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: "Invalid rating" });
+    }
+
+    const mod = await storage.rateMod(modId, rating);
+    res.json(mod);
   });
 
   app.get("/api/announcements", async (_req, res) => {

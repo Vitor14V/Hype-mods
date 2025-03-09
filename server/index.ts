@@ -71,24 +71,24 @@ app.use((req, res, next) => {
           port,
           host: "0.0.0.0",
           reusePort: true,
-        }, () => {
+        }, async () => {
           server.removeListener('error', onError);
           log(`Successfully bound to port ${port}`);
+
+          // Setup Vite or static files after port binding
+          if (process.env.NODE_ENV !== "production") {
+            log("Setting up Vite middleware...");
+            await setupVite(app, server);
+            log("Vite middleware setup complete");
+          } else {
+            log("Setting up static file serving...");
+            serveStatic(app);
+            log("Static file serving setup complete");
+          }
+
           resolve();
         });
       });
-
-      // Only setup Vite after successful port binding
-      if (app.get("env") === "development") {
-        log("Setting up Vite middleware...");
-        await setupVite(app, server);
-        log("Vite middleware setup complete");
-      } else {
-        log("Setting up static file serving...");
-        serveStatic(app);
-        log("Static file serving setup complete");
-      }
-
     } catch (err) {
       const error = err as NodeJS.ErrnoException;
       if (error.code === 'EADDRINUSE') {

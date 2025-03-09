@@ -9,6 +9,7 @@ import { Textarea } from "./textarea";
 import { Button } from "./button";
 import { Card, CardContent, CardHeader, CardTitle } from "./card";
 import { useToast } from "@/hooks/use-toast";
+import { Image, Loader2 } from "lucide-react";
 
 export function ModForm() {
   const { toast } = useToast();
@@ -23,12 +24,12 @@ export function ModForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/mods"] });
-      toast({ title: "Mod added successfully" });
+      toast({ title: "Mod adicionado com sucesso" });
       form.reset();
     },
     onError: (error: Error) => {
       toast({ 
-        title: "Failed to add mod",
+        title: "Erro ao adicionar mod",
         description: error.message,
         variant: "destructive"
       });
@@ -38,7 +39,7 @@ export function ModForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add New Mod</CardTitle>
+        <CardTitle>Adicionar Novo Mod</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -48,7 +49,7 @@ export function ModForm() {
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>Título</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -61,7 +62,7 @@ export function ModForm() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Descrição</FormLabel>
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
@@ -72,11 +73,47 @@ export function ModForm() {
             <FormField
               control={form.control}
               name="imageUrl"
-              render={({ field }) => (
+              render={({ field: { value, onChange, ...field } }) => (
                 <FormItem>
-                  <FormLabel>Image URL</FormLabel>
+                  <FormLabel>Imagem</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <div className="space-y-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            try {
+                              const res = await fetch("/api/upload", {
+                                method: "POST",
+                                body: formData,
+                              });
+                              const data = await res.json();
+                              onChange(data.url);
+                            } catch (error) {
+                              toast({
+                                title: "Erro ao fazer upload da imagem",
+                                description: "Tente novamente",
+                                variant: "destructive",
+                              });
+                            }
+                          }
+                        }}
+                        {...field}
+                      />
+                      {value && (
+                        <div className="relative aspect-video rounded-lg border">
+                          <img
+                            src={value}
+                            alt="Preview"
+                            className="object-cover rounded-lg w-full h-full"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -87,7 +124,7 @@ export function ModForm() {
               name="downloadUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Download URL</FormLabel>
+                  <FormLabel>Link para Download</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -95,8 +132,19 @@ export function ModForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Adding..." : "Add Mod"}
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adicionando...
+                </>
+              ) : (
+                "Adicionar Mod"
+              )}
             </Button>
           </form>
         </Form>
@@ -118,12 +166,12 @@ export function AnnouncementForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/announcements"] });
-      toast({ title: "Announcement posted" });
+      toast({ title: "Anúncio publicado" });
       form.reset();
     },
     onError: (error: Error) => {
       toast({ 
-        title: "Failed to post announcement",
+        title: "Erro ao publicar anúncio",
         description: error.message,
         variant: "destructive"
       });
@@ -133,7 +181,7 @@ export function AnnouncementForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Post Announcement</CardTitle>
+        <CardTitle>Publicar Anúncio</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -143,7 +191,7 @@ export function AnnouncementForm() {
               name="message"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Message</FormLabel>
+                  <FormLabel>Mensagem</FormLabel>
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
@@ -151,8 +199,19 @@ export function AnnouncementForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Posting..." : "Post Announcement"}
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Publicando...
+                </>
+              ) : (
+                "Publicar Anúncio"
+              )}
             </Button>
           </form>
         </Form>
