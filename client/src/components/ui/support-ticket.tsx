@@ -135,8 +135,8 @@ export function SupportTicketList() {
   const handleRespondTicket = (ticket: SupportTicket) => {
     setSelectedTicket(ticket);
     responseForm.reset({
-      response: "",
-      status: ticket.status || "em_andamento",
+      responseMessage: "",
+      status: (ticket.status as "pendente" | "em_andamento" | "resolvido") || "em_andamento",
     });
     setIsResponseDialogOpen(true);
   };
@@ -165,7 +165,7 @@ export function SupportTicketList() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="title"
+                  name="subject"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Título</FormLabel>
@@ -182,7 +182,7 @@ export function SupportTicketList() {
                 
                 <FormField
                   control={form.control}
-                  name="description"
+                  name="message"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Descrição</FormLabel>
@@ -256,20 +256,20 @@ export function SupportTicketList() {
             <DialogHeader>
               <DialogTitle>Responder Ticket #{selectedTicket.id}</DialogTitle>
               <DialogDescription>
-                {selectedTicket.title}
+                {selectedTicket.subject}
               </DialogDescription>
             </DialogHeader>
             
             <div className="mb-4 p-3 bg-muted rounded-md">
               <p className="text-sm">
-                {selectedTicket.description}
+                {selectedTicket.message}
               </p>
             </div>
             
-            {selectedTicket.response && (
+            {selectedTicket.responseMessage && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <h4 className="text-sm font-medium text-blue-800">Resposta anterior:</h4>
-                <p className="text-sm text-blue-700 mt-1">{selectedTicket.response}</p>
+                <p className="text-sm text-blue-700 mt-1">{selectedTicket.responseMessage}</p>
               </div>
             )}
             
@@ -277,7 +277,7 @@ export function SupportTicketList() {
               <form onSubmit={responseForm.handleSubmit(onResponseSubmit)} className="space-y-4">
                 <FormField
                   control={responseForm.control}
-                  name="response"
+                  name="responseMessage"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Resposta</FormLabel>
@@ -376,7 +376,7 @@ function renderTicketList(
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-lg">{ticket.title}</CardTitle>
+            <CardTitle className="text-lg">{ticket.subject}</CardTitle>
             <CardDescription>
               Ticket #{ticket.id} • {new Date(ticket.createdAt).toLocaleDateString()}
             </CardDescription>
@@ -385,15 +385,15 @@ function renderTicketList(
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm">{ticket.description}</p>
+        <p className="text-sm">{ticket.message}</p>
         
-        {ticket.response && (
+        {ticket.responseMessage && (
           <div className="mt-4 p-3 bg-muted rounded-md">
             <div className="flex items-start gap-2">
               <MessageSquare className="h-4 w-4 mt-1" />
               <div>
                 <p className="text-xs font-medium">Resposta da equipe:</p>
-                <p className="text-sm mt-1">{ticket.response}</p>
+                <p className="text-sm mt-1">{ticket.responseMessage}</p>
               </div>
             </div>
           </div>
