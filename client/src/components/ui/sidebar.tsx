@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "./button";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
-import { Separator } from "./separator";
-import { Menu, Home, MessageSquare, Shield } from "lucide-react";
+import { Menu, Home, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItemProps {
@@ -46,13 +45,6 @@ export function Sidebar() {
             isActive={location === "/"}
           >
             Mods
-          </NavItem>
-          <NavItem
-            href="/chat"
-            icon={<MessageSquare className="h-4 w-4" />}
-            isActive={location === "/chat"}
-          >
-            Chat
           </NavItem>
           <NavItem
             href="/admin"

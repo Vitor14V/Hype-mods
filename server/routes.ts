@@ -2,11 +2,38 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertModSchema, insertAnnouncementSchema, insertChatMessageSchema } from "@shared/schema";
+import { insertModSchema, insertAnnouncementSchema } from "@shared/schema";
+
+// Criar alguns mods de exemplo
+const sampleMods = [
+  {
+    title: "Better Graphics Mod",
+    description: "Melhora os gráficos do jogo com texturas em HD e efeitos visuais aprimorados.",
+    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e",
+    downloadUrl: "https://example.com/better-graphics-mod",
+  },
+  {
+    title: "Extra Weapons Pack",
+    description: "Adiciona 50 novas armas ao jogo, incluindo espadas lendárias e arcos mágicos.",
+    imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
+    downloadUrl: "https://example.com/extra-weapons",
+  },
+  {
+    title: "New Character Skins",
+    description: "Pack com 20 novas skins para personalizar seu personagem.",
+    imageUrl: "https://images.unsplash.com/photo-1551103782-8ab07afd45c1",
+    downloadUrl: "https://example.com/character-skins",
+  }
+];
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+
+  // Adicionar mods de exemplo
+  for (const mod of sampleMods) {
+    await storage.createMod(mod);
+  }
 
   app.get("/api/mods", async (_req, res) => {
     const mods = await storage.getMods();
@@ -44,32 +71,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     res.status(201).json(announcement);
-  });
-
-  app.get("/api/chat", async (_req, res) => {
-    const messages = await storage.getChatMessages();
-    res.json(messages);
-  });
-
-  wss.on('connection', (ws: WebSocket) => {
-    ws.on('message', async (message: Buffer) => {
-      try {
-        const data = JSON.parse(message.toString());
-        const parsed = insertChatMessageSchema.safeParse(data);
-        if (!parsed.success) return;
-
-        const chatMessage = await storage.createChatMessage(1, parsed.data.message); // Using default user ID 1
-
-        // Broadcast chat message to all connected clients
-        wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ type: 'chat', data: chatMessage }));
-          }
-        });
-      } catch (error) {
-        console.error('Error processing message:', error);
-      }
-    });
   });
 
   return httpServer;
