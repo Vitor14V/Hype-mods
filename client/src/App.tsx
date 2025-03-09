@@ -26,6 +26,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       {showIntro && <IntroAnimation onComplete={() => setShowIntro(false)} />}
       <Router />
+      <CarnavalTheme />
       <Toaster />
     </QueryClientProvider>
   );

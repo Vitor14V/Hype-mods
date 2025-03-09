@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2 } from "lucide-react";
+import { Trash2, Users, AlertTriangle } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   AlertDialog,
@@ -22,6 +22,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { UserManagement } from "@/components/ui/user-management";
+import { ReportedComments } from "@/components/ui/reported-comments";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ADMIN_PASSWORD = 'ADM2555';
 
@@ -99,60 +102,90 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
 
-          <div className="grid gap-8 md:grid-cols-2">
-            <div className="space-y-8">
-              <ModForm />
-              <Card>
-                <CardHeader>
-                  <CardTitle>Anúncios Recentes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[300px] pr-4">
-                    {announcements.map((announcement) => (
-                      <div key={announcement.id} className="mb-4 p-4 bg-muted rounded-lg relative group">
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(announcement.createdAt).toLocaleString()}
-                        </p>
-                        <p className="mt-2">{announcement.message}</p>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Remover anúncio?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. O anúncio será removido permanentemente.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteAnnouncementMutation.mutate(announcement.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Remover
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    ))}
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            </div>
+          <Tabs defaultValue="content">
+            <TabsList className="mb-8 w-full justify-start">
+              <TabsTrigger value="content" className="flex items-center gap-2">
+                Conteúdo
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Usuários
+              </TabsTrigger>
+              <TabsTrigger value="reports" className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Denúncias
+              </TabsTrigger>
+            </TabsList>
 
-            <div>
-              <AnnouncementForm />
-            </div>
-          </div>
+            <TabsContent value="content">
+              <div className="grid gap-8 md:grid-cols-2">
+                <div className="space-y-8">
+                  <ModForm />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Anúncios Recentes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ScrollArea className="h-[300px] pr-4">
+                        {announcements.length === 0 ? (
+                          <p className="text-center py-8 text-muted-foreground">Nenhum anúncio cadastrado</p>
+                        ) : (
+                          announcements.map((announcement) => (
+                            <div key={announcement.id} className="mb-4 p-4 bg-muted rounded-lg relative group">
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(announcement.createdAt).toLocaleString()}
+                              </p>
+                              <p className="mt-2">{announcement.message}</p>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Remover anúncio?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta ação não pode ser desfeita. O anúncio será removido permanentemente.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteAnnouncementMutation.mutate(announcement.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Remover
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          ))
+                        )}
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div>
+                  <AnnouncementForm />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="users">
+              <UserManagement />
+            </TabsContent>
+
+            <TabsContent value="reports">
+              <ReportedComments />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
