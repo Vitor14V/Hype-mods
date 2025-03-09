@@ -53,6 +53,16 @@ export class MemStorage implements IStorage {
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
     });
+    
+    // Criar admin inicial
+    const adminUser: User = {
+      id: this.currentId++,
+      username: "admin",
+      password: "admin123",
+      isAdmin: true,
+      isBanned: false
+    };
+    this.users.set(adminUser.id, adminUser);
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -125,7 +135,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       rating: 0,
       numRatings: 0,
-      tags: mod.tags || []
+      tags: Array.isArray(mod.tags) ? mod.tags : []
     };
     this.mods.set(id, newMod);
     return newMod;
@@ -173,7 +183,8 @@ export class MemStorage implements IStorage {
       id,
       createdAt: new Date(),
       isReported: false,
-      reportReason: null
+      reportReason: null,
+      userId: comment.userId || null
     };
     this.comments.set(id, newComment);
     return newComment;

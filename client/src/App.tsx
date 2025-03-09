@@ -7,6 +7,7 @@ import HomePage from "@/pages/home-page";
 import AdminPage from "@/pages/admin-page";
 import NotFound from "@/pages/not-found";
 import { IntroAnimation } from "@/components/ui/intro-animation";
+import { CarnavalTheme } from "@/components/ui/carnaval-theme";
 
 function Router() {
   return (

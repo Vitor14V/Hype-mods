@@ -6,7 +6,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
 import { storage } from "./storage";
-import { insertModSchema, insertAnnouncementSchema, insertCommentSchema } from "@shared/schema";
+import { insertModSchema, insertAnnouncementSchema, insertCommentSchema, insertCommentReportSchema } from "@shared/schema";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -30,25 +30,28 @@ const upload = multer({
   }
 });
 
-// Criar alguns mods de exemplo
+// Criar alguns mods de exemplo com tema de carnaval brasileiro
 const sampleMods = [
   {
-    title: "Better Graphics Mod",
-    description: "Melhora os gráficos do jogo com texturas em HD e efeitos visuais aprimorados.",
-    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e",
-    downloadUrl: "https://example.com/better-graphics-mod",
-  },
-  {
-    title: "Extra Weapons Pack",
-    description: "Adiciona 50 novas armas ao jogo, incluindo espadas lendárias e arcos mágicos.",
-    imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
-    downloadUrl: "https://example.com/extra-weapons",
-  },
-  {
-    title: "New Character Skins",
-    description: "Pack com 20 novas skins para personalizar seu personagem.",
+    title: "Pack de Fantasias de Carnaval",
+    description: "Adiciona fantasias incríveis de carnaval brasileiro para seus personagens. Inclui abadás, fantasias de escolas de samba e muito mais!",
     imageUrl: "https://images.unsplash.com/photo-1551103782-8ab07afd45c1",
-    downloadUrl: "https://example.com/character-skins",
+    downloadUrl: "https://example.com/carnaval-fantasias",
+    tags: ["carnaval", "fantasias", "brasil"]
+  },
+  {
+    title: "Instrumentos de Bateria de Samba",
+    description: "Adicione sons autênticos de bateria de escola de samba ao jogo! Surdo, tamborim, repique e muito mais!",
+    imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
+    downloadUrl: "https://example.com/samba-drums",
+    tags: ["carnaval", "instrumentos", "samba", "música"]
+  },
+  {
+    title: "Cenários de Blocos de Rua",
+    description: "Transforme o cenário do jogo em uma autêntica festa de rua brasileira, com decorações de carnaval, serpentinas e confetes.",
+    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e",
+    downloadUrl: "https://example.com/blocos-cenario",
+    tags: ["carnaval", "cenários", "blocos", "brasil"]
   }
 ];
 
@@ -84,8 +87,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/uploads', express.static('uploads'));
 
   // API Routes
-  app.get("/api/mods", async (_req, res) => {
-    const mods = await storage.getMods();
+  app.get("/api/mods", async (req, res) => {
+    const query = req.query.q as string;
+    const mods = query 
+      ? await storage.searchMods(query)
+      : await storage.getMods();
     res.json(mods);
   });
 
@@ -168,6 +174,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     res.sendStatus(200);
+  });
+
+  // Rota para pesquisar mods
+  app.get("/api/mods/search", async (req, res) => {
+    const query = req.query.q as string || "";
+    const mods = await storage.searchMods(query);
+    res.json(mods);
+  });
+
+  // Rotas para gestão de usuários
+  app.get("/api/users", async (_req, res) => {
+    const users = await storage.getAllUsers();
+    res.json(users);
+  });
+
+  app.put("/api/users/:userId/ban", async (req, res) => {
+    const userId = parseInt(req.params.userId);
+    try {
+      const user = await storage.banUser(userId);
+      
+      // Notificar todos os clientes conectados sobre o banimento
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ 
+            type: 'user_banned', 
+            data: { userId } 
+          }));
+        }
+      });
+      
+      res.json(user);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
+  });
+
+  app.put("/api/users/:userId/unban", async (req, res) => {
+    const userId = parseInt(req.params.userId);
+    try {
+      const user = await storage.unbanUser(userId);
+      
+      // Notificar todos os clientes conectados sobre o desbanimento
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ 
+            type: 'user_unbanned', 
+            data: { userId } 
+          }));
+        }
+      });
+      
+      res.json(user);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
+  });
+
+  // Rotas para denúncias de comentários
+  app.post("/api/comments/:commentId/report", async (req, res) => {
+    const commentId = parseInt(req.params.commentId);
+    const { reportReason } = req.body;
+    
+    if (!reportReason) {
+      return res.status(400).json({ message: "É necessário fornecer um motivo para a denúncia" });
+    }
+    
+    try {
+      const comment = await storage.reportComment(commentId, reportReason);
+      
+      // Notificar admins sobre a nova denúncia
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ 
+            type: 'comment_reported', 
+            data: comment 
+          }));
+        }
+      });
+      
+      res.json(comment);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
+  });
+
+  app.get("/api/comments/reported", async (_req, res) => {
+    const comments = await storage.getReportedComments();
+    res.json(comments);
+  });
+
+  app.put("/api/comments/:commentId/resolve", async (req, res) => {
+    const commentId = parseInt(req.params.commentId);
+    try {
+      const comment = await storage.resolveReportedComment(commentId);
+      res.json(comment);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
   });
 
   return httpServer;
