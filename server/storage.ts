@@ -1,4 +1,8 @@
-import { User, InsertUser, Mod, InsertMod, Announcement, InsertAnnouncement, Comment, InsertComment, InsertCommentReport, ChatMessage } from "@shared/schema";
+import { 
+  User, InsertUser, Mod, InsertMod, Announcement, InsertAnnouncement, 
+  Comment, InsertComment, InsertCommentReport, ChatMessage,
+  UpdateUserProfile, SupportTicket, InsertSupportTicket, UpdateSupportTicket
+} from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
