@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
+  isBanned: boolean("is_banned").default(false).notNull(),
 });
 
 export const mods = pgTable("mods", {
@@ -18,14 +19,19 @@ export const mods = pgTable("mods", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   rating: integer("rating").default(0).notNull(),
   numRatings: integer("num_ratings").default(0).notNull(),
+  // Campo para facilitar pesquisas
+  tags: text("tags").array().default([]).notNull(),
 });
 
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
   modId: integer("mod_id").references(() => mods.id).notNull(),
+  userId: integer("user_id").references(() => users.id),
   name: text("name").notNull(),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  isReported: boolean("is_reported").default(false).notNull(),
+  reportReason: text("report_reason"),
 });
 
 export const announcements = pgTable("announcements", {
@@ -51,12 +57,19 @@ export const insertModSchema = createInsertSchema(mods).pick({
   description: true,
   imageUrl: true,
   downloadUrl: true,
+  tags: true,
 });
 
 export const insertCommentSchema = createInsertSchema(comments).pick({
   modId: true,
+  userId: true,
   name: true,
   content: true,
+});
+
+export const insertCommentReportSchema = createInsertSchema(comments).pick({
+  id: true,
+  reportReason: true,
 });
 
 export const insertAnnouncementSchema = createInsertSchema(announcements).pick({
@@ -76,4 +89,6 @@ export type Announcement = typeof announcements.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertMod = z.infer<typeof insertModSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type InsertCommentReport = z.infer<typeof insertCommentReportSchema>;
 export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
