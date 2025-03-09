@@ -284,5 +284,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rotas para respostas a comentários
+  app.get("/api/comments/:commentId/replies", async (req, res) => {
+    const commentId = parseInt(req.params.commentId);
+    try {
+      const replies = await storage.getRepliesByCommentId(commentId);
+      res.json(replies);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
+  });
+
+  // Rotas para perfil de usuário
+  app.put("/api/users/:userId/profile", upload.single('profilePicture'), async (req, res) => {
+    const userId = parseInt(req.params.userId);
+    let profilePicture = null;
+    
+    if (req.file) {
+      profilePicture = `/uploads/${req.file.filename}`;
+    }
+    
+    // Validar dados do perfil
+    const parsed = updateUserProfileSchema.safeParse({
+      ...req.body,
+      profilePicture
+    });
+    
+    if (!parsed.success) {
+      return res.status(400).json(parsed.error);
+    }
+    
+    try {
+      const user = await storage.updateUserProfile(userId, parsed.data);
+      res.json(user);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
+  });
+  
+  // Denúncias de usuários
+  app.post("/api/users/:userId/report", async (req, res) => {
+    const userId = parseInt(req.params.userId);
+    
+    const parsed = userReportSchema.safeParse({
+      id: userId,
+      reportReason: req.body.reportReason
+    });
+    
+    if (!parsed.success) {
+      return res.status(400).json(parsed.error);
+    }
+    
+    try {
+      const user = await storage.reportUser(userId, parsed.data.reportReason);
+      
+      // Notificar admins sobre novo usuário denunciado
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ 
+            type: 'user_reported', 
+            data: { userId, reason: parsed.data.reportReason } 
+          }));
+        }
+      });
+      
+      res.json(user);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
+  });
+  
+  app.get("/api/users/reported", async (_req, res) => {
+    const users = await storage.getReportedUsers();
+    res.json(users);
+  });
+  
+  // Aprovação de perfil de usuário
+  app.put("/api/users/:userId/approve", async (req, res) => {
+    const userId = parseInt(req.params.userId);
+    
+    try {
+      const user = await storage.approveUserProfile(userId);
+      res.json(user);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
+  });
+  
+  // Sistema de suporte
+  app.post("/api/support", async (req, res) => {
+    const parsed = insertSupportTicketSchema.safeParse(req.body);
+    
+    if (!parsed.success) {
+      return res.status(400).json(parsed.error);
+    }
+    
+    try {
+      const ticket = await storage.createSupportTicket(parsed.data);
+      
+      // Notificar admins sobre novo ticket de suporte
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ 
+            type: 'support_ticket_created', 
+            data: ticket 
+          }));
+        }
+      });
+      
+      res.status(201).json(ticket);
+    } catch (error) {
+      res.status(400).json({ message: (error as Error).message });
+    }
+  });
+  
+  app.get("/api/support", async (_req, res) => {
+    const tickets = await storage.getSupportTickets();
+    res.json(tickets);
+  });
+  
+  app.get("/api/support/:ticketId", async (req, res) => {
+    const ticketId = parseInt(req.params.ticketId);
+    
+    try {
+      const ticket = await storage.getSupportTicketById(ticketId);
+      
+      if (!ticket) {
+        return res.status(404).json({ message: "Ticket não encontrado" });
+      }
+      
+      res.json(ticket);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
+  });
+  
+  app.put("/api/support/:ticketId", async (req, res) => {
+    const ticketId = parseInt(req.params.ticketId);
+    
+    const parsed = updateSupportTicketSchema.safeParse({
+      ...req.body,
+      id: ticketId
+    });
+    
+    if (!parsed.success) {
+      return res.status(400).json(parsed.error);
+    }
+    
+    try {
+      const ticket = await storage.updateSupportTicket(ticketId, parsed.data);
+      
+      // Se o ticket foi resolvido, notificar o usuário
+      if (parsed.data.status === "resolvido") {
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ 
+              type: 'support_ticket_resolved', 
+              data: ticket 
+            }));
+          }
+        });
+      }
+      
+      res.json(ticket);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
+  });
+
   return httpServer;
 }
