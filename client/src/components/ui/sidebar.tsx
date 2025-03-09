@@ -4,7 +4,7 @@ import { Button } from "./button";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
 import { Separator } from "./separator";
 import { useAuth } from "@/hooks/use-auth";
-import { Menu, Home, MessageSquare, Shield, LogOut } from "lucide-react";
+import { Menu, Home, MessageSquare, Shield, LogOut, Gamepad } from "lucide-react"; // Added Gamepad icon
 import { cn } from "@/lib/utils";
 
 interface NavItemProps {
@@ -46,6 +46,13 @@ export function Sidebar() {
             isActive={location === "/"}
           >
             Home
+          </NavItem>
+          <NavItem // Added game nav item
+            href="/game"
+            icon={<Gamepad className="h-4 w-4" />}
+            isActive={location === "/game"}
+          >
+            Game
           </NavItem>
           <NavItem
             href="/chat"
