@@ -32,6 +32,7 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   isReported: boolean("is_reported").default(false).notNull(),
   reportReason: text("report_reason"),
+  isResolved: boolean("is_resolved").default(false).notNull(),
 });
 
 export const announcements = pgTable("announcements", {

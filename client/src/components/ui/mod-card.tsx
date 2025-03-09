@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { CommentReportButton } from "./comment-report-button";
 
 interface ModCardProps {
   mod: Mod;
@@ -138,13 +139,21 @@ export function ModCard({ mod }: ModCardProps) {
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between">
                         <p className="font-medium">{comment.name}</p>
-                        <time className="text-sm text-muted-foreground">
-                          {format(new Date(comment.createdAt), "PPp", { locale: ptBR })}
-                        </time>
+                        <div className="flex items-center">
+                          <time className="text-sm text-muted-foreground mr-2">
+                            {format(new Date(comment.createdAt), "PPp", { locale: ptBR })}
+                          </time>
+                          <CommentReportButton commentId={comment.id} />
+                        </div>
                       </div>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {comment.content}
                       </p>
+                      {comment.isReported && !comment.isResolved && (
+                        <div className="mt-2 text-xs text-red-500 bg-red-100 dark:bg-red-900/20 p-1 rounded">
+                          Este comentário foi denunciado e está em análise.
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
