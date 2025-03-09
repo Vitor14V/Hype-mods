@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "./button";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
-import { Menu, Home, Shield } from "lucide-react";
+import { Menu, Home, Shield, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItemProps {
