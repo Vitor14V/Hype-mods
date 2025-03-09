@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "./button";
 import { Input } from "./input";
 import { Textarea } from "./textarea";
-import { Loader2, Download, Star, MessageSquare } from "lucide-react";
+import { Loader2, Download, Star, MessageSquare, User } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "./form";
 import { useForm } from "react-hook-form";
@@ -12,6 +12,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertCommentSchema, type Mod, type Comment } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface ModCardProps {
   mod: Mod;
@@ -88,7 +91,7 @@ export function ModCard({ mod }: ModCardProps) {
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  className="h-4 w-4 cursor-pointer"
+                  className="h-4 w-4 cursor-pointer transition-colors hover:text-yellow-400"
                   fill={star <= (mod.rating / mod.numRatings) ? "currentColor" : "none"}
                   onClick={() => rateMutation.mutate(star)}
                 />
@@ -107,25 +110,49 @@ export function ModCard({ mod }: ModCardProps) {
         </Button>
         <Dialog open={showComments} onOpenChange={setShowComments}>
           <DialogTrigger asChild>
-            <Button variant="outline">
+            <Button variant="outline" className="relative">
               <MessageSquare className="h-4 w-4" />
+              {comments.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                  {comments.length}
+                </span>
+              )}
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Comentários</DialogTitle>
+              <DialogTitle>Comentários sobre {mod.title}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="max-h-[300px] overflow-y-auto space-y-4">
+            <div className="space-y-6">
+              <div className="max-h-[400px] overflow-y-auto space-y-6 pr-4">
                 {comments.map((comment) => (
-                  <div key={comment.id} className="border-b pb-3">
-                    <p className="font-medium">{comment.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(comment.createdAt).toLocaleString()}
-                    </p>
-                    <p className="mt-1">{comment.content}</p>
+                  <div 
+                    key={comment.id} 
+                    className="flex gap-4 pb-6 border-b border-border animate-in fade-in-50 duration-300"
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback>
+                        <User className="h-5 w-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">{comment.name}</p>
+                        <time className="text-sm text-muted-foreground">
+                          {format(new Date(comment.createdAt), "PPp", { locale: ptBR })}
+                        </time>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {comment.content}
+                      </p>
+                    </div>
                   </div>
                 ))}
+                {comments.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhum comentário ainda. Seja o primeiro a comentar!
+                  </div>
+                )}
               </div>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit((data) => commentMutation.mutate(data))} className="space-y-4">
@@ -134,9 +161,9 @@ export function ModCard({ mod }: ModCardProps) {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome</FormLabel>
+                        <FormLabel>Seu nome</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} placeholder="Como devemos te chamar?" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -146,9 +173,13 @@ export function ModCard({ mod }: ModCardProps) {
                     name="content"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Comentário</FormLabel>
+                        <FormLabel>Seu comentário</FormLabel>
                         <FormControl>
-                          <Textarea {...field} />
+                          <Textarea 
+                            {...field} 
+                            placeholder="O que você achou deste mod?"
+                            className="min-h-[100px]"
+                          />
                         </FormControl>
                       </FormItem>
                     )}

@@ -152,5 +152,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(201).json(announcement);
   });
 
+  // Adicionar a rota de DELETE para anúncios
+  app.delete("/api/announcements/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteAnnouncement(id);
+
+    // Notificar todos os clientes conectados sobre a remoção
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ 
+          type: 'announcement_deleted', 
+          data: { id } 
+        }));
+      }
+    });
+
+    res.sendStatus(200);
+  });
+
   return httpServer;
 }

@@ -18,6 +18,7 @@ export interface IStorage {
 
   getAnnouncements(): Promise<Announcement[]>;
   createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
+  deleteAnnouncement(id: number): Promise<void>;
 
   getChatMessages(): Promise<ChatMessage[]>;
   createChatMessage(userId: number, message: string): Promise<ChatMessage>;
@@ -121,6 +122,10 @@ export class MemStorage implements IStorage {
     const newAnnouncement: Announcement = { ...announcement, id, createdAt: new Date() };
     this.announcements.set(id, newAnnouncement);
     return newAnnouncement;
+  }
+
+  async deleteAnnouncement(id: number): Promise<void> {
+    this.announcements.delete(id);
   }
 
   async getChatMessages(): Promise<ChatMessage[]> {

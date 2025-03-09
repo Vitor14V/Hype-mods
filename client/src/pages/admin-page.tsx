@@ -2,13 +2,26 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Sidebar } from "@/components/ui/sidebar";
 import { ModForm, AnnouncementForm } from "@/components/ui/admin-forms";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import type { Announcement } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Trash2 } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const ADMIN_PASSWORD = 'ADM2555';
 
@@ -20,6 +33,23 @@ export default function AdminPage() {
 
   const { data: announcements = [] } = useQuery<Announcement[]>({
     queryKey: ["/api/announcements"],
+  });
+
+  const deleteAnnouncementMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/announcements/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/announcements"] });
+      toast({ title: "Anúncio removido com sucesso" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao remover anúncio",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const handleLogin = () => {
@@ -79,11 +109,39 @@ export default function AdminPage() {
                 <CardContent>
                   <ScrollArea className="h-[300px] pr-4">
                     {announcements.map((announcement) => (
-                      <div key={announcement.id} className="mb-4 p-4 bg-muted rounded-lg">
+                      <div key={announcement.id} className="mb-4 p-4 bg-muted rounded-lg relative group">
                         <p className="text-sm text-muted-foreground">
                           {new Date(announcement.createdAt).toLocaleString()}
                         </p>
                         <p className="mt-2">{announcement.message}</p>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remover anúncio?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não pode ser desfeita. O anúncio será removido permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteAnnouncementMutation.mutate(announcement.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     ))}
                   </ScrollArea>
