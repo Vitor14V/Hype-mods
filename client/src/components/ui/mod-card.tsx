@@ -143,15 +143,21 @@ export function ModCard({ mod }: ModCardProps) {
                           <time className="text-sm text-muted-foreground mr-2">
                             {format(new Date(comment.createdAt), "PPp", { locale: ptBR })}
                           </time>
-                          <CommentReportButton commentId={comment.id} />
+                          {!comment.isResolved && <CommentReportButton commentId={comment.id} />}
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {comment.content}
                       </p>
-                      {comment.isReported && !comment.isResolved && (
-                        <div className="mt-2 text-xs text-red-500 bg-red-100 dark:bg-red-900/20 p-1 rounded">
-                          Este comentário foi denunciado e está em análise.
+                      {comment.isReported && (
+                        <div className={`mt-2 text-xs p-1 rounded ${
+                          comment.isResolved 
+                            ? "text-green-500 bg-green-100 dark:bg-green-900/20" 
+                            : "text-red-500 bg-red-100 dark:bg-red-900/20"
+                        }`}>
+                          {comment.isResolved 
+                            ? "Este comentário foi denunciado, mas já foi revisado pela moderação." 
+                            : "Este comentário foi denunciado e está em análise."}
                         </div>
                       )}
                     </div>
