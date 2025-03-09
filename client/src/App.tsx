@@ -8,6 +8,7 @@ import AdminPage from "@/pages/admin-page";
 import NotFound from "@/pages/not-found";
 import { IntroAnimation } from "@/components/ui/intro-animation";
 import { CarnavalTheme } from "@/components/ui/carnaval-theme";
+import { AuthProvider } from "@/hooks/use-auth";
 
 function Router() {
   return (
@@ -24,10 +25,12 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {showIntro && <IntroAnimation onComplete={() => setShowIntro(false)} />}
-      <Router />
-      <CarnavalTheme />
-      <Toaster />
+      <AuthProvider>
+        {showIntro && <IntroAnimation onComplete={() => setShowIntro(false)} />}
+        <Router />
+        <CarnavalTheme />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

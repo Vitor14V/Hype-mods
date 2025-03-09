@@ -336,14 +336,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const user = await storage.reportUser(userId, parsed.data.reportReason);
+      // Garantir que reportReason seja uma string
+      const reportReason = parsed.data.reportReason || "";
+      const user = await storage.reportUser(userId, reportReason);
       
       // Notificar admins sobre novo usuário denunciado
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({ 
             type: 'user_reported', 
-            data: { userId, reason: parsed.data.reportReason } 
+            data: { userId, reason: reportReason } 
           }));
         }
       });

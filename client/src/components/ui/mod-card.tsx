@@ -16,6 +16,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CommentReportButton } from "./comment-report-button";
+import { CommentReplies } from "./comment-replies";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ModCardProps {
   mod: Mod;
@@ -24,6 +26,7 @@ interface ModCardProps {
 export function ModCard({ mod }: ModCardProps) {
   const [showComments, setShowComments] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: comments = [] } = useQuery<Comment[]>({
     queryKey: [`/api/mods/${mod.id}/comments`],
@@ -34,7 +37,7 @@ export function ModCard({ mod }: ModCardProps) {
     resolver: zodResolver(insertCommentSchema),
     defaultValues: {
       modId: mod.id,
-      name: "",
+      name: user?.username || "",
       content: "",
     },
   });
@@ -160,6 +163,9 @@ export function ModCard({ mod }: ModCardProps) {
                             : "Este comentário foi denunciado e está em análise."}
                         </div>
                       )}
+                      
+                      {/* Componente de respostas de comentários */}
+                      {!comment.replyToId && <CommentReplies comment={comment} modId={mod.id} />}
                     </div>
                   </div>
                 ))}
