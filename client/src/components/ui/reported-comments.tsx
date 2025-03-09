@@ -24,6 +24,7 @@ export function ReportedComments() {
 
   const { data: reportedComments = [], isLoading } = useQuery<Comment[]>({
     queryKey: ["/api/comments/reported"],
+    select: (data) => data.filter(comment => !comment.isResolved),
   });
 
   const { data: mods = [] } = useQuery<Mod[]>({
@@ -95,7 +96,7 @@ export function ReportedComments() {
                           <AlertDialogTitle>Resolver denúncia?</AlertDialogTitle>
                           <AlertDialogDescription>
                             Tem certeza que deseja marcar esta denúncia como resolvida?
-                            O comentário não será mais exibido como denunciado.
+                            O comentário será marcado como resolvido e não aparecerá mais nesta lista.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

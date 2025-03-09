@@ -184,6 +184,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       isReported: false,
       reportReason: null,
+      isResolved: false,
       userId: comment.userId || null
     };
     this.comments.set(id, newComment);
@@ -199,7 +200,8 @@ export class MemStorage implements IStorage {
     const updatedComment: Comment = {
       ...comment,
       isReported: true,
-      reportReason: reason
+      reportReason: reason,
+      isResolved: false
     };
     this.comments.set(commentId, updatedComment);
     return updatedComment;
@@ -219,8 +221,7 @@ export class MemStorage implements IStorage {
     
     const updatedComment: Comment = {
       ...comment,
-      isReported: false,
-      reportReason: null
+      isResolved: true
     };
     this.comments.set(commentId, updatedComment);
     return updatedComment;
