@@ -3,8 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "./button";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
 import { Separator } from "./separator";
-import { useAuth } from "@/hooks/use-auth";
-import { Menu, Home, MessageSquare, Shield, LogOut, Gamepad } from "lucide-react"; // Added Gamepad icon
+import { Menu, Home, MessageSquare, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItemProps {
@@ -16,28 +15,29 @@ interface NavItemProps {
 
 function NavItem({ href, icon, children, isActive }: NavItemProps) {
   return (
-    <Link href={href}>
-      <a className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-        isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
-      )}>
-        {icon}
-        <span>{children}</span>
-      </a>
-    </Link>
+    <div>
+      <Link href={href}>
+        <div className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-pointer",
+          isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+        )}>
+          {icon}
+          <span>{children}</span>
+        </div>
+      </Link>
+    </div>
   );
 }
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { user, logoutMutation } = useAuth();
   const [open, setOpen] = useState(false);
 
   const navItems = (
     <div className="space-y-4 py-4">
       <div className="px-3 py-2">
-        <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
-          Mod Platform
+        <h2 className="mb-2 px-4 text-2xl font-bold tracking-tight text-primary">
+          Hype Mod
         </h2>
         <div className="space-y-1">
           <NavItem
@@ -45,14 +45,7 @@ export function Sidebar() {
             icon={<Home className="h-4 w-4" />}
             isActive={location === "/"}
           >
-            Home
-          </NavItem>
-          <NavItem // Added game nav item
-            href="/game"
-            icon={<Gamepad className="h-4 w-4" />}
-            isActive={location === "/game"}
-          >
-            Game
+            Mods
           </NavItem>
           <NavItem
             href="/chat"
@@ -61,28 +54,13 @@ export function Sidebar() {
           >
             Chat
           </NavItem>
-          {user?.isAdmin && (
-            <NavItem
-              href="/admin"
-              icon={<Shield className="h-4 w-4" />}
-              isActive={location === "/admin"}
-            >
-              Admin
-            </NavItem>
-          )}
-        </div>
-      </div>
-      <Separator />
-      <div className="px-3 py-2">
-        <div className="space-y-1">
-          <Button
-            variant="ghost"
-            className="w-full justify-start"
-            onClick={() => logoutMutation.mutate()}
+          <NavItem
+            href="/admin"
+            icon={<Shield className="h-4 w-4" />}
+            isActive={location === "/admin"}
           >
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
+            Admin
+          </NavItem>
         </div>
       </div>
     </div>

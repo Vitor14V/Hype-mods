@@ -2,12 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
 import { insertModSchema, insertAnnouncementSchema, insertChatMessageSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  setupAuth(app);
-
   const httpServer = createServer(app);
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
@@ -17,10 +14,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/mods", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user.isAdmin) {
-      return res.status(403).send("Admin access required");
-    }
-
     const parsed = insertModSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json(parsed.error);
@@ -36,10 +29,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/announcements", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user.isAdmin) {
-      return res.status(403).send("Admin access required");
-    }
-
     const parsed = insertAnnouncementSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json(parsed.error);
@@ -62,21 +51,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(messages);
   });
 
-  // Keep track of authenticated WebSocket connections
-  const clients = new Map<WebSocket, { userId: number }>();
-
   wss.on('connection', (ws: WebSocket) => {
-    let userId: number | undefined;
-
     ws.on('message', async (message: Buffer) => {
-      if (!userId) return;
-
       try {
         const data = JSON.parse(message.toString());
         const parsed = insertChatMessageSchema.safeParse(data);
         if (!parsed.success) return;
 
-        const chatMessage = await storage.createChatMessage(userId, parsed.data.message);
+        const chatMessage = await storage.createChatMessage(1, parsed.data.message); // Using default user ID 1
 
         // Broadcast chat message to all connected clients
         wss.clients.forEach((client) => {
@@ -87,16 +69,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error('Error processing message:', error);
       }
-    });
-
-    // Associate the WebSocket connection with the authenticated user
-    app.once('login', (user) => {
-      userId = user.id;
-      clients.set(ws, { userId });
-    });
-
-    ws.on('close', () => {
-      clients.delete(ws);
     });
   });
 
