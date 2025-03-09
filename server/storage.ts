@@ -11,6 +11,10 @@ export interface IStorage {
   banUser(userId: number): Promise<User>;
   unbanUser(userId: number): Promise<User>;
   getAllUsers(): Promise<User[]>;
+  updateUserProfile(userId: number, profile: UpdateUserProfile): Promise<User>;
+  reportUser(userId: number, reason: string): Promise<User>;
+  getReportedUsers(): Promise<User[]>;
+  approveUserProfile(userId: number): Promise<User>;
 
   getMods(): Promise<Mod[]>;
   getModById(id: number): Promise<Mod | undefined>;
@@ -23,6 +27,12 @@ export interface IStorage {
   reportComment(commentId: number, reason: string): Promise<Comment>;
   getReportedComments(): Promise<Comment[]>;
   resolveReportedComment(commentId: number): Promise<Comment>;
+  getRepliesByCommentId(commentId: number): Promise<Comment[]>;
+
+  createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
+  getSupportTickets(): Promise<SupportTicket[]>;
+  getSupportTicketById(id: number): Promise<SupportTicket | undefined>;
+  updateSupportTicket(id: number, data: UpdateSupportTicket): Promise<SupportTicket>;
 
   getAnnouncements(): Promise<Announcement[]>;
   createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
@@ -43,12 +53,15 @@ export class MemStorage implements IStorage {
   private currentId: number;
   sessionStore: session.Store;
 
+  private supportTickets: Map<number, SupportTicket>;
+
   constructor() {
     this.users = new Map();
     this.mods = new Map();
     this.announcements = new Map();
     this.comments = new Map();
     this.chatMessages = new Map();
+    this.supportTickets = new Map();
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
@@ -60,7 +73,12 @@ export class MemStorage implements IStorage {
       username: "admin",
       password: "admin123",
       isAdmin: true,
-      isBanned: false
+      isBanned: false,
+      profilePicture: null,
+      bio: null,
+      isProfileApproved: true,
+      isReported: false,
+      reportReason: null
     };
     this.users.set(adminUser.id, adminUser);
   }
