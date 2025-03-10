@@ -15,12 +15,16 @@ export function CarnavalTheme() {
     const audio = new Audio("/assets/carnaval.mp3");
     audio.loop = true;
     audio.volume = 0.3;
+    audio.preload = "auto";
     audioRef.current = audio;
     
     // Verificação de erro ao carregar o áudio
     audio.addEventListener('error', (e) => {
       console.error('Erro ao carregar o áudio:', e);
     });
+    
+    // Pré-carregar o áudio para evitar erros
+    audio.load();
 
     // Exibir diálogo de ativação de áudio
     const timer = setTimeout(() => {
@@ -175,15 +179,27 @@ export function CarnavalTheme() {
   };
 
   const enableAudio = () => {
-    if (!audioRef.current) return;
+    setShowDialog(false);
+    
+    if (!audioRef.current) {
+      toast({
+        description: "Não foi possível ativar o áudio, mas você pode continuar aproveitando a aplicação!",
+        variant: "default",
+      });
+      return;
+    }
     
     audioRef.current.play().catch((error) => {
       console.error("Erro ao reproduzir áudio:", error);
-    });
-    setAudioEnabled(true);
-    setShowDialog(false);
-    toast({
-      description: "Música de Carnaval ativada! Bom divertimento!",
+      toast({
+        description: "Não foi possível iniciar a música, mas você ainda pode aproveitar a experiência!",
+        variant: "default",
+      });
+    }).then(() => {
+      setAudioEnabled(true);
+      toast({
+        description: "Música de Carnaval ativada! Bom divertimento!",
+      });
     });
   };
 
