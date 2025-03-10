@@ -3,7 +3,6 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import fs from 'fs';
 import path from 'path';
-// Importando o worker keep-alive
 import worker from './worker';
 
 const app = express();
@@ -42,7 +41,7 @@ app.use((req, res, next) => {
 
 (async () => {
   log("Starting server initialization...");
-  
+
   // Verificar se a pasta de uploads existe, se não criar
   const uploadsDir = path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadsDir)) {
@@ -51,7 +50,7 @@ app.use((req, res, next) => {
   } else {
     console.log('Uploads directory verified successfully');
   }
-  
+
   // Iniciar o worker de keep-alive
   worker.start();
 
@@ -66,60 +65,27 @@ app.use((req, res, next) => {
     console.error("Server error:", err);
   });
 
-  // Try different ports starting from 5000
-  const tryPort = async (port: number): Promise<void> => {
-    try {
-      log(`Attempting to bind on port ${port}`);
-      await new Promise<void>((resolve, reject) => {
-        const onError = (err: NodeJS.ErrnoException) => {
-          if (err.code === 'EADDRINUSE') {
-            log(`Port ${port} is in use, trying next port`);
-            reject(err);
-          } else {
-            console.error('Server error:', err);
-            process.exit(1);
-          }
-        };
+  // Usar a porta fornecida pelo ambiente ou fallback para 5000
+  const PORT = process.env.PORT || 5000;
 
-        server.once('error', onError);
+  try {
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
 
-        server.listen({
-          port,
-          host: "0.0.0.0",
-          reusePort: true,
-        }, async () => {
-          server.removeListener('error', onError);
-          log(`Successfully bound to port ${port}`);
-
-          // Setup Vite or static files after port binding
-          if (process.env.NODE_ENV !== "production") {
-            log("Setting up Vite middleware...");
-            await setupVite(app, server);
-            log("Vite middleware setup complete");
-          } else {
-            log("Setting up static file serving...");
-            serveStatic(app);
-            log("Static file serving setup complete");
-          }
-
-          resolve();
+      // Setup Vite or static files after port binding
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Setting up Vite middleware...");
+        setupVite(app, server).then(() => {
+          console.log("Vite middleware setup complete");
         });
-      });
-    } catch (err) {
-      const error = err as NodeJS.ErrnoException;
-      if (error.code === 'EADDRINUSE') {
-        if (port < 5010) { // Try up to port 5010
-          await tryPort(port + 1);
-        } else {
-          console.error('No available ports found between 5000-5010');
-          process.exit(1);
-        }
       } else {
-        throw err;
+        console.log("Setting up static file serving...");
+        serveStatic(app);
+        console.log("Static file serving setup complete");
       }
-    }
-  };
-
-  log("Starting port binding process...");
-  await tryPort(5000);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
 })();

@@ -9,10 +9,15 @@ if [ ! -d "node_modules" ]; then
   npm install
 fi
 
-# Compilar o projeto
-echo "Compilando o projeto..."
-npm run build
+# Verificar se o build do frontend existe
+if [ ! -d "client/dist" ]; then
+  echo "Compilando o frontend..."
+  cd client
+  npm install
+  npm run build
+  cd ..
+fi
 
 # Iniciar o servidor
 echo "Iniciando o servidor..."
-npm run start
+node server/index.js
