@@ -1,0 +1,16 @@
+[build]
+builder = "nixpacks"
+buildCommand = "npm install && cd client && npm install && npm run build && cd .."
+
+[deploy]
+startCommand = "node server/index.js"
+healthcheckPath = "/api/status"
+restartPolicyType = "on_failure"
+
+[service]
+numReplicas = 1
+port = 3000
+
+# Environment variables will be set through Railway Dashboard
+[env]
+NODE_ENV = "production"

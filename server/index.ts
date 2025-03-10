@@ -79,8 +79,14 @@ app.use((req, res, next) => {
   }
 
   const PORT = process.env.PORT || 3000;
+  const clientBuildPath = path.join(process.cwd(), 'client', 'dist');
 
   try {
+    //Check if the client build directory exists.  If not, throw an error.  This assumes a build process has already been run separately.
+    if (!fs.existsSync(clientBuildPath)) {
+      throw new Error("Frontend build directory not found. Run 'npm run build' in the client directory.");
+    }
+
     server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server is running on port ${PORT}`);
 
