@@ -9,6 +9,12 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Em produção, servir os arquivos estáticos do frontend
+if (process.env.NODE_ENV === "production") {
+  const clientDistPath = path.join(process.cwd(), 'client', 'dist');
+  app.use(express.static(clientDistPath));
+}
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -47,8 +53,6 @@ app.use((req, res, next) => {
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
     console.log('Uploads directory created successfully');
-  } else {
-    console.log('Uploads directory verified successfully');
   }
 
   // Iniciar o worker de keep-alive
@@ -65,23 +69,28 @@ app.use((req, res, next) => {
     console.error("Server error:", err);
   });
 
-  // Usar a porta fornecida pelo ambiente ou fallback para 5000
-  const PORT = process.env.PORT || 5000;
+  // Em produção, todas as rotas não encontradas retornam o index.html
+  if (process.env.NODE_ENV === "production") {
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api')) {
+        res.sendFile(path.join(process.cwd(), 'client', 'dist', 'index.html'));
+      }
+    });
+  }
+
+  const PORT = process.env.PORT || 3000;
 
   try {
     server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server is running on port ${PORT}`);
 
-      // Setup Vite or static files after port binding
       if (process.env.NODE_ENV !== "production") {
         console.log("Setting up Vite middleware...");
         setupVite(app, server).then(() => {
           console.log("Vite middleware setup complete");
         });
       } else {
-        console.log("Setting up static file serving...");
-        serveStatic(app);
-        console.log("Static file serving setup complete");
+        console.log("Running in production mode");
       }
     });
   } catch (error) {
