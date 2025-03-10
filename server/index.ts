@@ -1,6 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import fs from 'fs';
+import path from 'path';
+// Importando o worker keep-alive
+import worker from './worker';
 
 const app = express();
 app.use(express.json());
@@ -38,6 +42,18 @@ app.use((req, res, next) => {
 
 (async () => {
   log("Starting server initialization...");
+  
+  // Verificar se a pasta de uploads existe, se não criar
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Uploads directory created successfully');
+  } else {
+    console.log('Uploads directory verified successfully');
+  }
+  
+  // Iniciar o worker de keep-alive
+  worker.start();
 
   const server = await registerRoutes(app);
   log("Routes registered successfully");

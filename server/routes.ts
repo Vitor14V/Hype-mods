@@ -71,6 +71,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'));
 
+  // Rota de status para monitoramento e keep-alive
+  app.get("/api/status", (_req, res) => {
+    res.status(200).json({
+      status: "online",
+      time: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  });
+
   // API Routes
   app.get("/api/mods", async (req, res) => {
     const query = req.query.q as string;
