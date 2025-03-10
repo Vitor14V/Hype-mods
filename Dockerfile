@@ -11,7 +11,7 @@ WORKDIR /app
 
 # Set production environment
 ENV NODE_ENV="production"
-
+ENV PORT=3000
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
@@ -27,12 +27,14 @@ RUN npm ci --include=dev
 # Copy application code
 COPY . .
 
+# Install client dependencies and build frontend
+RUN cd client && npm ci && npm run build && cd ..
+
 # Build application
 RUN npm run build
 
 # Remove development dependencies
 RUN npm prune --omit=dev
-
 
 # Final stage for app image
 FROM base
@@ -42,4 +44,4 @@ COPY --from=build /app /app
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-CMD [ "npm", "run", "start" ]
+CMD [ "node", "server/index.js" ]
