@@ -1,0 +1,40 @@
+{
+  "users": [
+    [
+      1,
+      {
+        "id": 1,
+        "username": "admin",
+        "password": "admin123",
+        "isAdmin": true,
+        "isBanned": false,
+        "profilePicture": null,
+        "bio": null,
+        "isProfileApproved": true,
+        "isReported": false,
+        "reportReason": null
+      }
+    ]
+  ],
+  "mods": [
+    [
+      2,
+      {
+        "title": "MINECRAFT TESTE ",
+        "description": "Versão teste ",
+        "imageUrl": "/uploads/1741572515055-85559703.jpg",
+        "downloadUrl": "(deployment)",
+        "id": 2,
+        "createdAt": "2025-03-10T02:08:40.185Z",
+        "rating": 0,
+        "numRatings": 0,
+        "tags": []
+      }
+    ]
+  ],
+  "comments": [],
+  "announcements": [],
+  "chatMessages": [],
+  "supportTickets": [],
+  "currentId": 3
+}

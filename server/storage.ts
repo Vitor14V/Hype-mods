@@ -25,6 +25,8 @@ export interface IStorage {
   getMods(): Promise<Mod[]>;
   getModById(id: number): Promise<Mod | undefined>;
   createMod(mod: InsertMod): Promise<Mod>;
+  updateMod(modId: number, mod: Partial<InsertMod>): Promise<Mod>;
+  deleteMod(modId: number): Promise<void>;
   rateMod(modId: number, rating: number): Promise<Mod>;
   searchMods(query: string): Promise<Mod[]>;
 
@@ -219,6 +221,31 @@ export class MemStorage implements IStorage {
     };
     this.mods.set(id, newMod);
     return newMod;
+  }
+
+  async updateMod(modId: number, mod: Partial<InsertMod>): Promise<Mod> {
+    const existingMod = this.mods.get(modId);
+    if (!existingMod) {
+      throw new Error("Mod não encontrado");
+    }
+
+    const updatedMod: Mod = {
+      ...existingMod,
+      title: mod.title !== undefined ? mod.title : existingMod.title,
+      description: mod.description !== undefined ? mod.description : existingMod.description,
+      imageUrl: mod.imageUrl !== undefined ? mod.imageUrl : existingMod.imageUrl,
+      downloadUrl: mod.downloadUrl !== undefined ? mod.downloadUrl : existingMod.downloadUrl,
+      tags: mod.tags !== undefined ? mod.tags : existingMod.tags,
+    };
+    this.mods.set(modId, updatedMod);
+    return updatedMod;
+  }
+
+  async deleteMod(modId: number): Promise<void> {
+    if (!this.mods.has(modId)) {
+      throw new Error("Mod não encontrado");
+    }
+    this.mods.delete(modId);
   }
 
   async rateMod(modId: number, rating: number): Promise<Mod> {
@@ -485,6 +512,17 @@ export class FileStorage extends MemStorage {
     const newMod = await super.createMod(mod);
     this.saveData();
     return newMod;
+  }
+  
+  async updateMod(modId: number, mod: Partial<InsertMod>): Promise<Mod> {
+    const updatedMod = await super.updateMod(modId, mod);
+    this.saveData();
+    return updatedMod;
+  }
+  
+  async deleteMod(modId: number): Promise<void> {
+    await super.deleteMod(modId);
+    this.saveData();
   }
   
   async rateMod(modId: number, rating: number): Promise<Mod> {

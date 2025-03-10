@@ -24,6 +24,7 @@ export const mods = pgTable("mods", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   rating: integer("rating").default(0).notNull(),
   numRatings: integer("num_ratings").default(0).notNull(),
+  version: text("version").default("1.0").notNull(),
   // Campo para facilitar pesquisas
   tags: text("tags").array().default([]).notNull(),
 });
