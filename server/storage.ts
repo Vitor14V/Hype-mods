@@ -5,6 +5,8 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import fs from "fs";
+import path from "path";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -49,15 +51,15 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private mods: Map<number, Mod>;
-  private announcements: Map<number, Announcement>;
-  private comments: Map<number, Comment>;
-  private chatMessages: Map<number, ChatMessage>;
-  private currentId: number;
+  protected users: Map<number, User>;
+  protected mods: Map<number, Mod>;
+  protected announcements: Map<number, Announcement>;
+  protected comments: Map<number, Comment>;
+  protected chatMessages: Map<number, ChatMessage>;
+  protected currentId: number;
   sessionStore: session.Store;
 
-  private supportTickets: Map<number, SupportTicket>;
+  protected supportTickets: Map<number, SupportTicket>;
 
   constructor() {
     this.users = new Map();
@@ -377,4 +379,167 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class FileStorage extends MemStorage {
+  private dataDir: string;
+  
+  constructor(dataDir: string = "./data") {
+    super();
+    this.dataDir = dataDir;
+    
+    // Criar diretório de dados se não existir
+    if (!fs.existsSync(this.dataDir)) {
+      fs.mkdirSync(this.dataDir, { recursive: true });
+    }
+    
+    // Carregar dados salvos
+    this.loadData();
+  }
+  
+  // Métodos para salvar e carregar dados
+  private saveData() {
+    try {
+      const data = {
+        users: Array.from(this.users.entries()),
+        mods: Array.from(this.mods.entries()),
+        comments: Array.from(this.comments.entries()),
+        announcements: Array.from(this.announcements.entries()),
+        chatMessages: Array.from(this.chatMessages.entries()),
+        supportTickets: Array.from(this.supportTickets.entries()),
+        currentId: this.currentId
+      };
+      
+      fs.writeFileSync(
+        path.join(this.dataDir, "data.json"), 
+        JSON.stringify(data, null, 2),
+        'utf8'
+      );
+      console.log("Dados salvos com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar dados:", error);
+    }
+  }
+  
+  private loadData() {
+    try {
+      const dataPath = path.join(this.dataDir, "data.json");
+      
+      if (fs.existsSync(dataPath)) {
+        const fileContent = fs.readFileSync(dataPath, 'utf8');
+        const data = JSON.parse(fileContent);
+        
+        // Restaurar dados
+        this.users = new Map(data.users);
+        this.mods = new Map(data.mods);
+        this.comments = new Map(data.comments);
+        this.announcements = new Map(data.announcements);
+        this.chatMessages = new Map(data.chatMessages);
+        this.supportTickets = new Map(data.supportTickets);
+        this.currentId = data.currentId;
+        
+        console.log("Dados carregados com sucesso!");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      // Se houver erro ao carregar, continua com os dados vazios
+    }
+  }
+  
+  // Sobrescrever os métodos de gravação para salvar após alterações
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const user = await super.createUser(insertUser);
+    this.saveData();
+    return user;
+  }
+  
+  async updateUserProfile(userId: number, profile: UpdateUserProfile): Promise<User> {
+    const user = await super.updateUserProfile(userId, profile);
+    this.saveData();
+    return user;
+  }
+  
+  async reportUser(userId: number, reason: string): Promise<User> {
+    const user = await super.reportUser(userId, reason);
+    this.saveData();
+    return user;
+  }
+  
+  async approveUserProfile(userId: number): Promise<User> {
+    const user = await super.approveUserProfile(userId);
+    this.saveData();
+    return user;
+  }
+  
+  async banUser(userId: number): Promise<User> {
+    const user = await super.banUser(userId);
+    this.saveData();
+    return user;
+  }
+  
+  async unbanUser(userId: number): Promise<User> {
+    const user = await super.unbanUser(userId);
+    this.saveData();
+    return user;
+  }
+  
+  async createMod(mod: InsertMod): Promise<Mod> {
+    const newMod = await super.createMod(mod);
+    this.saveData();
+    return newMod;
+  }
+  
+  async rateMod(modId: number, rating: number): Promise<Mod> {
+    const mod = await super.rateMod(modId, rating);
+    this.saveData();
+    return mod;
+  }
+  
+  async createComment(comment: InsertComment): Promise<Comment> {
+    const newComment = await super.createComment(comment);
+    this.saveData();
+    return newComment;
+  }
+  
+  async reportComment(commentId: number, reason: string): Promise<Comment> {
+    const comment = await super.reportComment(commentId, reason);
+    this.saveData();
+    return comment;
+  }
+  
+  async resolveReportedComment(commentId: number): Promise<Comment> {
+    const comment = await super.resolveReportedComment(commentId);
+    this.saveData();
+    return comment;
+  }
+  
+  async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
+    const newTicket = await super.createSupportTicket(ticket);
+    this.saveData();
+    return newTicket;
+  }
+  
+  async updateSupportTicket(id: number, data: UpdateSupportTicket): Promise<SupportTicket> {
+    const ticket = await super.updateSupportTicket(id, data);
+    this.saveData();
+    return ticket;
+  }
+  
+  async createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement> {
+    const newAnnouncement = await super.createAnnouncement(announcement);
+    this.saveData();
+    return newAnnouncement;
+  }
+  
+  async deleteAnnouncement(id: number): Promise<void> {
+    await super.deleteAnnouncement(id);
+    this.saveData();
+  }
+  
+  async createChatMessage(userId: number, message: string): Promise<ChatMessage> {
+    const chatMessage = await super.createChatMessage(userId, message);
+    this.saveData();
+    return chatMessage;
+  }
+}
+
+// Usar o armazenamento em arquivo para persistência dos dados
+export const storage = new FileStorage();
