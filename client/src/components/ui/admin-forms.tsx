@@ -1,29 +1,53 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { insertModSchema, insertAnnouncementSchema } from "@shared/schema";
-import { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./form";
-import { Input } from "./input";
-import { Textarea } from "./textarea";
-import { Button } from "./button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./card";
-import { useToast } from "@/hooks/use-toast";
-import { Image, Loader2, Trash2, Edit, Plus, RefreshCw } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  AlertCircle,
+  Bell,
+  Check,
+  Loader2,
+  RefreshCw,
+  Trash2,
+  Edit,
+  X
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { 
+  Table, 
+  TableHeader, 
+  TableBody, 
+  TableHead, 
+  TableRow, 
+  TableCell 
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
 import { 
   Dialog, 
   DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
   DialogHeader, 
-  DialogTitle, 
-  DialogTrigger, 
-  DialogDescription,
-  DialogFooter
-} from "./dialog";
-import { useState } from "react";
-import { Alert, AlertDescription, AlertTitle } from "./alert";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
-import { Badge } from "./badge";
+  DialogTitle 
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+
+import { insertModSchema, insertAnnouncementSchema } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+
 
 export function ModForm() {
   const { toast } = useToast();
@@ -105,15 +129,15 @@ export function ModForm() {
                                 method: "POST",
                                 body: formData,
                               });
-                              
+
                               if (!res.ok) {
                                 throw new Error(`Erro: ${res.status} ${res.statusText}`);
                               }
-                              
+
                               const data = await res.json();
                               console.log("Upload bem-sucedido:", data);
                               onChange(data.url);
-                              
+
                               toast({
                                 title: "Imagem enviada com sucesso",
                                 description: "A imagem foi carregada e está pronta para uso",
@@ -335,18 +359,13 @@ export function ModsManagement() {
           </div>
         )}
 
-        {/* Edit Dialog */}
+        {/* Diálogo de edição de mod */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Editar Mod</DialogTitle>
-              <DialogDescription>
-                Atualize as informações do mod "{selectedMod?.title}".
-              </DialogDescription>
-            </DialogHeader>
+            <DialogTitle>Editar Mod</DialogTitle>
             <Form {...editForm}>
               <form 
-                onSubmit={editForm.handleSubmit((data) => updateMutation.mutate(data))}
+                onSubmit={editForm.handleSubmit((data) => updateMutation.mutate(data))} 
                 className="space-y-4"
               >
                 <FormField
@@ -356,12 +375,13 @@ export function ModsManagement() {
                     <FormItem>
                       <FormLabel>Título</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input placeholder="Digite o título" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={editForm.control}
                   name="description"
@@ -369,106 +389,50 @@ export function ModsManagement() {
                     <FormItem>
                       <FormLabel>Descrição</FormLabel>
                       <FormControl>
-                        <Textarea {...field} />
+                        <Textarea placeholder="Digite a descrição" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={editForm.control}
                   name="imageUrl"
-                  render={({ field: { value, onChange, ...field } }) => (
+                  render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Imagem</FormLabel>
+                      <FormLabel>URL da Imagem</FormLabel>
                       <FormControl>
-                        <div className="space-y-4">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const formData = new FormData();
-                                formData.append("file", file);
-                                try {
-                                  const res = await fetch("/api/upload", {
-                                    method: "POST",
-                                    body: formData,
-                                  });
-                                  
-                                  if (!res.ok) {
-                                    throw new Error(`Erro: ${res.status} ${res.statusText}`);
-                                  }
-                                  
-                                  const data = await res.json();
-                                  console.log("Upload bem-sucedido:", data);
-                                  onChange(data.url);
-                                  
-                                  toast({
-                                    title: "Imagem enviada com sucesso",
-                                    description: "A imagem foi carregada e está pronta para uso",
-                                    variant: "default",
-                                  });
-                                } catch (error) {
-                                  console.error("Erro detalhado de upload:", error);
-                                  toast({
-                                    title: "Erro ao fazer upload da imagem",
-                                    description: error instanceof Error ? error.message : "Tente novamente",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }
-                            }}
-                            {...field}
-                          />
-                          {value && (
-                            <div className="relative aspect-video rounded-lg border">
-                              <img
-                                src={value}
-                                alt="Preview"
-                                className="object-cover rounded-lg w-full h-full"
-                              />
-                            </div>
-                          )}
-                        </div>
+                        <Input placeholder="URL da imagem" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={editForm.control}
                   name="downloadUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Link para Download</FormLabel>
+                      <FormLabel>URL de Download</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input placeholder="URL de download" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <DialogFooter>
-                  <Button 
-                    variant="outline" 
-                    type="button" 
-                    onClick={() => setIsEditDialogOpen(false)}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={updateMutation.isPending}
-                  >
+                  <Button type="submit" disabled={updateMutation.isPending}>
                     {updateMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Salvando...
                       </>
                     ) : (
-                      "Salvar Alterações"
+                      "Salvar mudanças"
                     )}
                   </Button>
                 </DialogFooter>
@@ -477,25 +441,21 @@ export function ModsManagement() {
           </DialogContent>
         </Dialog>
 
-        {/* Delete Confirmation Dialog */}
+        {/* Diálogo de confirmação de exclusão */}
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Confirmar Exclusão</DialogTitle>
-              <DialogDescription>
-                Tem certeza que deseja excluir o mod "{selectedMod?.title}"? Esta ação é irreversível.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsDeleteDialogOpen(false)}
-              >
+            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogDescription>
+              Você tem certeza que deseja excluir o mod "{selectedMod?.title}"? 
+              Esta ação não pode ser desfeita.
+            </DialogDescription>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
                 Cancelar
               </Button>
               <Button 
                 variant="destructive" 
-                onClick={() => deleteMutation.mutate()}
+                onClick={() => deleteMutation.mutate()} 
                 disabled={deleteMutation.isPending}
               >
                 {deleteMutation.isPending ? (
@@ -504,7 +464,7 @@ export function ModsManagement() {
                     Excluindo...
                   </>
                 ) : (
-                  "Excluir Mod"
+                  "Excluir"
                 )}
               </Button>
             </DialogFooter>
