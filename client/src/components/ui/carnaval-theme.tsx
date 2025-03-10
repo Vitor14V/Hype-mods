@@ -16,6 +16,11 @@ export function CarnavalTheme() {
     audio.loop = true;
     audio.volume = 0.3;
     audioRef.current = audio;
+    
+    // Verificação de erro ao carregar o áudio
+    audio.addEventListener('error', (e) => {
+      console.error('Erro ao carregar o áudio:', e);
+    });
 
     // Exibir diálogo de ativação de áudio
     const timer = setTimeout(() => {

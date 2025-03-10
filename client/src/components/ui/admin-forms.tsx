@@ -91,12 +91,25 @@ export function ModForm() {
                                 method: "POST",
                                 body: formData,
                               });
+                              
+                              if (!res.ok) {
+                                throw new Error(`Erro: ${res.status} ${res.statusText}`);
+                              }
+                              
                               const data = await res.json();
+                              console.log("Upload bem-sucedido:", data);
                               onChange(data.url);
+                              
+                              toast({
+                                title: "Imagem enviada com sucesso",
+                                description: "A imagem foi carregada e está pronta para uso",
+                                variant: "default",
+                              });
                             } catch (error) {
+                              console.error("Erro detalhado de upload:", error);
                               toast({
                                 title: "Erro ao fazer upload da imagem",
-                                description: "Tente novamente",
+                                description: error instanceof Error ? error.message : "Tente novamente",
                                 variant: "destructive",
                               });
                             }

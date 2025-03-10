@@ -40,39 +40,14 @@ const upload = multer({
   }
 });
 
-// Criar alguns mods de exemplo com tema de carnaval brasileiro
-const sampleMods = [
-  {
-    title: "Pack de Fantasias de Carnaval",
-    description: "Adiciona fantasias incríveis de carnaval brasileiro para seus personagens. Inclui abadás, fantasias de escolas de samba e muito mais!",
-    imageUrl: "https://images.unsplash.com/photo-1551103782-8ab07afd45c1",
-    downloadUrl: "https://example.com/carnaval-fantasias",
-    tags: ["carnaval", "fantasias", "brasil"]
-  },
-  {
-    title: "Instrumentos de Bateria de Samba",
-    description: "Adicione sons autênticos de bateria de escola de samba ao jogo! Surdo, tamborim, repique e muito mais!",
-    imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
-    downloadUrl: "https://example.com/samba-drums",
-    tags: ["carnaval", "instrumentos", "samba", "música"]
-  },
-  {
-    title: "Cenários de Blocos de Rua",
-    description: "Transforme o cenário do jogo em uma autêntica festa de rua brasileira, com decorações de carnaval, serpentinas e confetes.",
-    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e",
-    downloadUrl: "https://example.com/blocos-cenario",
-    tags: ["carnaval", "cenários", "blocos", "brasil"]
-  }
-];
+// Array vazio sem mods de exemplo
+const sampleMods: any[] = [];
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
-  // Adicionar mods de exemplo
-  for (const mod of sampleMods) {
-    await storage.createMod(mod);
-  }
+  // Nenhum mod de exemplo será adicionado
 
   // Ensure uploads directory exists
   try {
