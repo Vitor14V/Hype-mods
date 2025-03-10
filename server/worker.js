@@ -46,13 +46,15 @@ function pingServer() {
 console.log('[Worker] Iniciando worker de keep-alive...');
 setInterval(pingServer, PING_INTERVAL);
 
-// Verificar se o servidor está online após 30 segundos (tempo para inicialização)
-setTimeout(pingServer, 30 * 1000);
-
 // Exportar para poder ser importado pelo servidor principal
 export default { 
   start: () => {
     console.log('[Worker] Keep-alive worker ativado');
-    pingServer();
+    
+    // Esperar 10 segundos antes do primeiro ping para garantir que o servidor esteja online
+    setTimeout(() => {
+      console.log('[Worker] Realizando ping inicial após inicialização do servidor');
+      pingServer();
+    }, 10 * 1000);
   }
 };
