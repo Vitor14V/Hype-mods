@@ -32,9 +32,25 @@
       }
     ]
   ],
-  "comments": [],
+  "comments": [
+    [
+      3,
+      {
+        "modId": 2,
+        "name": "Gg",
+        "content": "Ese",
+        "id": 3,
+        "createdAt": "2025-03-10T02:13:16.922Z",
+        "isReported": false,
+        "reportReason": null,
+        "isResolved": false,
+        "userId": null,
+        "replyToId": null
+      }
+    ]
+  ],
   "announcements": [],
   "chatMessages": [],
   "supportTickets": [],
-  "currentId": 3
+  "currentId": 4
 }

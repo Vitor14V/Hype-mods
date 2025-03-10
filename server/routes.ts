@@ -128,6 +128,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const mod = await storage.rateMod(modId, rating);
     res.json(mod);
   });
+  
+  // Rotas para atualizar e excluir mods
+  app.put("/api/mods/:modId", async (req, res) => {
+    const modId = parseInt(req.params.modId);
+    
+    const parsed = insertModSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json(parsed.error);
+    }
+
+    try {
+      const mod = await storage.updateMod(modId, parsed.data);
+      
+      // Notificar clientes conectados sobre o mod atualizado
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ 
+            type: 'mod_updated', 
+            data: mod 
+          }));
+        }
+      });
+      
+      res.json(mod);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
+  });
+
+  app.delete("/api/mods/:modId", async (req, res) => {
+    const modId = parseInt(req.params.modId);
+    
+    try {
+      await storage.deleteMod(modId);
+      
+      // Notificar clientes conectados sobre o mod excluído
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ 
+            type: 'mod_deleted', 
+            data: { id: modId } 
+          }));
+        }
+      });
+      
+      res.sendStatus(200);
+    } catch (error) {
+      res.status(404).json({ message: (error as Error).message });
+    }
+  });
 
   app.get("/api/announcements", async (_req, res) => {
     const announcements = await storage.getAnnouncements();

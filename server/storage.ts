@@ -217,6 +217,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       rating: 0,
       numRatings: 0,
+      version: "1.0",
       tags: Array.isArray(mod.tags) ? mod.tags : []
     };
     this.mods.set(id, newMod);
@@ -236,6 +237,7 @@ export class MemStorage implements IStorage {
       imageUrl: mod.imageUrl !== undefined ? mod.imageUrl : existingMod.imageUrl,
       downloadUrl: mod.downloadUrl !== undefined ? mod.downloadUrl : existingMod.downloadUrl,
       tags: mod.tags !== undefined ? mod.tags : existingMod.tags,
+      version: existingMod.version
     };
     this.mods.set(modId, updatedMod);
     return updatedMod;
