@@ -221,6 +221,8 @@ export function ModsManagement() {
       description: "",
       imageUrl: "",
       downloadUrl: "",
+      version: "",
+      tags: [],
     }
   });
 
@@ -232,6 +234,7 @@ export function ModsManagement() {
         description: selectedMod.description,
         imageUrl: selectedMod.imageUrl,
         downloadUrl: selectedMod.downloadUrl,
+        version: selectedMod.version,
         tags: selectedMod.tags,
       });
     }
@@ -395,6 +398,19 @@ export function ModsManagement() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={editForm.control}
+                  name="version"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Versão</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Digite a versão" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={editForm.control}
@@ -424,18 +440,48 @@ export function ModsManagement() {
                   )}
                 />
 
-                <DialogFooter>
-                  <Button type="submit" disabled={updateMutation.isPending}>
+                <FormField
+                  control={editForm.control}
+                  name="tags"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tags (separadas por vírgula)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Ex: aventura, rpg, magia" 
+                          value={field.value?.join(', ') || ''} 
+                          onChange={(e) => {
+                            const tagsArray = e.target.value.split(',').map(tag => tag.trim());
+                            field.onChange(tagsArray.filter(Boolean));
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end gap-3 mt-5">
+                  <Button 
+                    variant="outline" 
+                    type="button" 
+                    onClick={() => setIsEditDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    type="submit"
+                    disabled={updateMutation.isPending}
+                  >
                     {updateMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Salvando...
                       </>
                     ) : (
-                      "Salvar mudanças"
+                      'Salvar Alterações'
                     )}
                   </Button>
-                </DialogFooter>
+                </div>
               </form>
             </Form>
           </DialogContent>
